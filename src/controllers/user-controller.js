@@ -1,19 +1,30 @@
 const { UserService } = require('../services');
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
-const createUser = async (req, res) => {
+const { SuccessResponse, ErrorResponse } = require('../utils/common');
+
+const SignUp = async (req, res) => {
   try {
     const user = await UserService.create(req.body);
-    res.status(StatusCodes.CREATED).json(user);
+    SuccessResponse.data = user;
+    res.status(StatusCodes.CREATED).json(SuccessResponse);
   } catch (err) {
-    if (err instanceof AppError) {
-      res.status(err.statusCode).json(err.message);
-    } else {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json('Cannot create user');
-    }
+    ErrorResponse.error = err;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
   }
 };
-
+const SignIn = async (req, res) => {
+  try {
+    const user = await UserService.signIn(req.body);
+    SuccessResponse.data = user;
+    return res.status(StatusCodes.OK).json(SuccessResponse);
+  } catch (err) {
+    console.log('Error in Controller', err);
+    ErrorResponse.error = err;
+    throw new AppError('Cannot sign in', StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
 module.exports = {
-  createUser,
+  SignUp,
+  SignIn,
 };
