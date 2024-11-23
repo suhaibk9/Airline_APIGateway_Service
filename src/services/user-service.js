@@ -1,12 +1,22 @@
 const { StatusCodes } = require('http-status-codes');
-const { UserRepository } = require('../repositories/index');
+const { UserRepository, RoleRepository } = require('../repositories/index');
 const userRepo = new UserRepository();
+const roleRepo = new RoleRepository();
+const { ENUMS } = require('../utils/common/index');
+const { USER_ROLES } = ENUMS;
+const { ADMIN, CUSTOMER, FLIGHT_COMPANY } = USER_ROLES;
 const AppError = require('../utils/errors/app-error');
 const { Auth } = require('../utils/common');
+
 const bcrypt = require('bcrypt');
 const create = async (data) => {
   try {
     const user = await userRepo.create(data);
+    const role = await roleRepo.getRoleByName(CUSTOMER);
+    console.log('USER', user);
+    console.log('ROLE', role);
+    user.addRole(role);
+
     return user;
   } catch (err) {
     if (
@@ -64,8 +74,47 @@ const isAuthenticated = async (token) => {
     throw new AppError('Cannot verify token', StatusCodes.UNAUTHORIZED);
   }
 };
+const addRoleToUser = async (data) => {
+  console.log('DATA in Service', data);
+  try {
+    const role = await roleRepo.getRoleByName(data.role);
+    const user = await userRepo.get(data.userId);
+    if (!role) {
+      throw new AppError('Role not found', StatusCodes.NOT_FOUND);
+    }
+    if (!user) {
+      throw new AppError('User not found', StatusCodes.NOT_FOUND);
+    }
+    user.addRole(role);
+    return user;
+  } catch (err) {
+    console.log('ERROR IN SERVICE', err);
+    throw new AppError(
+      'Cannot add role to user',
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+const isAdmin = async (id) => {
+  try {
+    const user = await userRepo.get(id);
+    if (!user) throw new AppError('User not found', StatusCodes.NOT_FOUND);
+    const role = await roleRepo.getRoleByName(ADMIN);
+    if (!role) throw new AppError('Role not found', StatusCodes.NOT_FOUND);
+    const isUserAdmin = await user.hasRole(role);
+    return isUserAdmin;
+  } catch (err) {
+    console.log('ERROR IN SERVICE', err);
+    throw new AppError(
+      'Cannot verify user role',
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
 module.exports = {
   create,
   signIn,
   isAuthenticated,
+  addRoleToUser,
+  isAdmin,
 };

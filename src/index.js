@@ -8,6 +8,7 @@ const {
   FLIGHT_SERVICE_URL,
   BOOKING_SERVICE_URL,
 } = require('./config/server-config');
+const { User, Role } = require('./models');
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,8 +41,14 @@ app.use(
     pathRewrite: { '^/bookingService': '/' },
   })
 );
-app.listen(ServerConfig.PORT, () => {
+app.listen(ServerConfig.PORT, async () => {
   console.log(`Successfully started the server on PORT : ${ServerConfig.PORT}`);
+  // const user = await User.findByPk(5);
+  // const role = await Role.findByPk(5);
+  // console.log('User', user);
+  // console.log('Role', role);
+  // await user.addRole(role);
+  // console.log('User Role Added Successfully');
 });
 
 /**
@@ -65,4 +72,7 @@ app.listen(ServerConfig.PORT, () => {
 
  Say you want to do do get all flights.
   http://localhost:3000/flightsService/api/v1/flights
+
+
+
  */
